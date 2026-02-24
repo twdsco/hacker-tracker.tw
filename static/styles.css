@@ -252,6 +252,16 @@
             flex-wrap: wrap;
         }
         .filter-title { font-size: 0.9rem; color: var(--text-secondary); }
+        .ics-link {
+            font-size: 0.95rem;
+            color: #fff;
+            text-decoration: none;
+            border-bottom: 1px dashed #fff;
+            padding-bottom: 2px;
+        }
+        .ics-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+        .ics-confirmed { color: #00ff66; border-bottom-color: #00ff66; }
+        .ics-tentative { color: #ffaa00; border-bottom-color: #ffaa00; }
         .inline-option { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; }
         .inline-option input { accent-color: var(--accent); }
         #add-event-modal .modal-content { max-height: 85vh; overflow-y: auto; }
