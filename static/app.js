@@ -70,6 +70,28 @@
             return value !== undefined && value !== null && value !== '';
         }
 
+        function escapeHTML(value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function normalizeUrl(value) {
+            if (!hasValue(value)) return '';
+            try {
+                const url = new URL(value, window.location.origin);
+                if (url.protocol === 'http:' || url.protocol === 'https:') {
+                    return url.href;
+                }
+            } catch (err) {
+                return '';
+            }
+            return '';
+        }
+
         function normalizeTag(tag) {
             return tag.trim();
         }
@@ -195,7 +217,7 @@
 
         function renderTagPills(tags) {
             if (!Array.isArray(tags) || tags.length === 0) return '';
-            return `<div class="event-tags">${tags.map(tag => `<span class="tag-pill">${tag}</span>`).join('')}</div>`;
+            return `<div class="event-tags">${tags.map(tag => `<span class="tag-pill">${escapeHTML(tag)}</span>`).join('')}</div>`;
         }
 
         function setDefaultDisplayDates() {
@@ -250,18 +272,19 @@
                     const dateDisplay = formatDateTimeDisplay(ev.start, ev.end);
                     const tagsHTML = renderTagPills(ev.tags);
                     const infoItems = [];
-                    infoItems.push(`<span class="info-item">🕒 ${dateDisplay}</span>`);
-                    if (hasValue(ev.location)) infoItems.push(`<span class="info-item">📍 ${ev.location}</span>`);
-                    if (hasValue(ev.organizer)) infoItems.push(`<span class="info-item">🏢 ${ev.organizer}</span>`);
-                    if (hasValue(ev.contact)) infoItems.push(`<span class="info-item">👤 ${ev.contact}</span>`);
-                    if (hasValue(ev.url)) {
-                        infoItems.push(`<span class="info-item">🔗 網址：<a href="${ev.url}" target="_blank">${ev.url}</a></span>`);
+                    infoItems.push(`<span class="info-item">🕒 ${escapeHTML(dateDisplay)}</span>`);
+                    if (hasValue(ev.location)) infoItems.push(`<span class="info-item">📍 ${escapeHTML(ev.location)}</span>`);
+                    if (hasValue(ev.organizer)) infoItems.push(`<span class="info-item">🏢 ${escapeHTML(ev.organizer)}</span>`);
+                    if (hasValue(ev.contact)) infoItems.push(`<span class="info-item">👤 ${escapeHTML(ev.contact)}</span>`);
+                    const safeUrl = normalizeUrl(ev.url);
+                    if (safeUrl) {
+                        infoItems.push(`<span class="info-item">🔗 網址：<a href="${escapeHTML(safeUrl)}" target="_blank" rel="noopener noreferrer">${escapeHTML(safeUrl)}</a></span>`);
                     }
                     
                     cardsHTML += `
                         <div class="event-card">
                             ${badgeHTML}
-                            <div class="event-title">${ev.title}</div>
+                            <div class="event-title">${escapeHTML(ev.title)}</div>
                             ${tagsHTML}
                             <div class="event-info">
                                 ${infoItems.join('')}
@@ -400,7 +423,7 @@
 
                     grid.innerHTML += `
                         <div class="cal-event-pill" 
-                             onclick="openModal(${ev.id})" title="${ev.title}"
+                             onclick="openModal(${ev.id})" title="${escapeHTML(ev.title)}"
                              style="grid-column: ${startCol + 1} / span ${endCol - startCol + 1}; 
                                     grid-row: ${gridRow}; 
                                     margin-top: ${marginTop}px; margin-left: ${marginLeft}; margin-right: ${marginRight};
@@ -408,7 +431,7 @@
                                     border-top: 1px solid ${border}; border-bottom: 1px solid ${border}; 
                                     border-left: ${bLeft}; border-right: ${bRight}; color: ${color}; 
                                     border-radius: ${brStyle};">
-                            ${ev.title}
+                            ${escapeHTML(ev.title)}
                         </div>
                     `;
                 });
@@ -495,7 +518,7 @@
                              style="background: ${isConfirmed ? 'var(--confirmed-bg)' : 'var(--tentative-bg)'}; 
                                     border: 1px solid ${isConfirmed ? 'var(--accent)' : 'var(--tentative-border)'}; 
                                     color: ${isConfirmed ? 'var(--accent)' : 'var(--text-primary)'}; padding: 12px; font-size: 1rem;">
-                            ${statusBadge} ${ev.title}
+                            ${statusBadge} ${escapeHTML(ev.title)}
                         </div>
                     `;
                 });
@@ -580,28 +603,29 @@
             modalDate.style.display = 'flex';
 
             if (hasValue(ev.location)) {
-                modalLocation.innerHTML = `📍 <strong>地點：</strong> ${ev.location}`;
+                modalLocation.innerHTML = `📍 <strong>地點：</strong> ${escapeHTML(ev.location)}`;
                 modalLocation.style.display = 'flex';
             } else {
                 modalLocation.style.display = 'none';
             }
 
             if (hasValue(ev.organizer)) {
-                modalOrganizer.innerHTML = `🏢 <strong>主辦單位：</strong> ${ev.organizer}`;
+                modalOrganizer.innerHTML = `🏢 <strong>主辦單位：</strong> ${escapeHTML(ev.organizer)}`;
                 modalOrganizer.style.display = 'flex';
             } else {
                 modalOrganizer.style.display = 'none';
             }
 
             if (hasValue(ev.contact)) {
-                modalContact.innerHTML = `👤 <strong>聯絡資訊：</strong> ${ev.contact}`;
+                modalContact.innerHTML = `👤 <strong>聯絡資訊：</strong> ${escapeHTML(ev.contact)}`;
                 modalContact.style.display = 'flex';
             } else {
                 modalContact.style.display = 'none';
             }
 
-            if (hasValue(ev.url)) {
-                urlContainer.innerHTML = `🔗 <strong>活動網址：</strong> <a href="${ev.url}" target="_blank">${ev.url}</a>`;
+            const safeUrl = normalizeUrl(ev.url);
+            if (safeUrl) {
+                urlContainer.innerHTML = `🔗 <strong>活動網址：</strong> <a href="${escapeHTML(safeUrl)}" target="_blank" rel="noopener noreferrer">${escapeHTML(safeUrl)}</a>`;
                 urlContainer.style.display = 'flex';
             } else {
                 urlContainer.style.display = 'none';
