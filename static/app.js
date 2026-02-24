@@ -11,14 +11,9 @@
             const empty = [];
             try {
                 const cacheBuster = CONFIG.data.cacheBusting ? `?ts=${Date.now()}` : '';
-                const [upcomingRes, archiveRes] = await Promise.all([
-                    fetch(`${CONFIG.data.upcomingPath}${cacheBuster}`),
-                    fetch(`${CONFIG.data.archivePath}${cacheBuster}`)
-                ]);
-                const upcomingData = upcomingRes.ok ? await upcomingRes.json() : empty;
-                const archiveData = archiveRes.ok ? await archiveRes.json() : empty;
-                const combined = [...(Array.isArray(upcomingData) ? upcomingData : empty),
-                                  ...(Array.isArray(archiveData) ? archiveData : empty)];
+                const allRes = await fetch(`${CONFIG.data.allPath}${cacheBuster}`);
+                const allData = allRes.ok ? await allRes.json() : empty;
+                const combined = Array.isArray(allData) ? allData : empty;
 
                 events = combined.map((ev, index) => ({
                     id: index + 1,
@@ -712,8 +707,8 @@
                 .replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-')
                 .replace(/^-+|-+$/g, '')
                 .slice(0, 40);
-            const datePrefix = startDate;
-            const fileName = `${datePrefix}-${slug || 'event'}.json`;
+            const datePrefix = startDate.replace(/-/g, '');
+            const fileName = `${slug || 'event'}-${datePrefix}.json`;
             const jsonString = JSON.stringify(newEvent, null, 4);
 
             const output = document.getElementById('add-json-output');
