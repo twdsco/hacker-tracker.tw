@@ -59,6 +59,10 @@ jobs:
         run: |
           python3 scripts/build-all.py
 
+      - name: Build ics files
+        run: |
+          python3 scripts/build-ics.py
+
       - name: Commit changes
         shell: bash
         run: |
@@ -68,8 +72,8 @@ jobs:
             echo "No changes to commit."
             exit 0
           fi
-          git add data/index.json data/all.json
-          git commit -m "Sync index.json and all.json"
+          git add data/index.json data/all.json data/allevents.ics data/confirmed.ics data/tentative.ics
+          git commit -m "Sync index.json, all.json, and ics feeds"
           git push origin main
 
       - name: Merge main into gh-pages
