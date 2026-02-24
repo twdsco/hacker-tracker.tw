@@ -1,0 +1,114 @@
+name: Sync Events and Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'data/upcoming/**.json'
+      - 'data/archive/**.json'
+      - 'data/index.json'
+      - 'data/all.json'
+      - 'scripts/build-all.py'
+      - 'scripts/validate-event.py'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Validate changed event files
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHANGED=$(git diff --name-only "${GITHUB_SHA}^" "${GITHUB_SHA}" -- 'data/upcoming/*.json' 'data/archive/*.json')
+          if [ -z "$CHANGED" ]; then
+            echo "No event files changed."
+          else
+            echo "Validating:"
+            echo "$CHANGED"
+            while IFS= read -r file; do
+              [ -z "$file" ] && continue
+              python3 scripts/validate-event.py "$file"
+            done <<< "$CHANGED"
+          fi
+
+      - name: Sync index.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          CREATED=$(git diff --name-status "${GITHUB_SHA}^" "${GITHUB_SHA}" -- 'data/upcoming/*.json' 'data/archive/*.json' | awk '$1=="A"{print $2}')
+          python3 - <<'PY'
+import json
+from pathlib import Path
+import os
+
+root = Path.cwd()
+index_file = root / "data" / "index.json"
+
+created_env = os.environ.get("CREATED", "")
+created = [line.strip() for line in created_env.splitlines() if line.strip()]
+created_rel = {str(Path(p).relative_to(root / "data")) for p in created}
+
+current = []
+if index_file.exists():
+    current = json.loads(index_file.read_text(encoding="utf-8"))
+    if not isinstance(current, list):
+        raise SystemExit("index.json must be a JSON array of filenames")
+
+existing = set()
+for rel in current:
+    if not isinstance(rel, str):
+        continue
+    if (root / "data" / rel).exists():
+        existing.add(rel)
+
+for rel in created_rel:
+    existing.add(rel)
+
+files = sorted(existing)
+
+index_file.write_text(json.dumps(files, ensure_ascii=False, indent=4) + "\n", encoding="utf-8")
+print(f"index.json updated with {len(files)} files")
+PY
+
+      - name: Build all.json
+        run: |
+          python3 scripts/build-all.py
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --porcelain
+          if git diff --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/index.json data/all.json
+          git commit -m "Sync index.json and all.json"
+          git push origin main
+
+      - name: Merge main into gh-pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin gh-pages || true
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            git checkout -B gh-pages origin/gh-pages
+          else
+            git checkout -B gh-pages
+          fi
+          git merge --no-edit origin/main
+          git push origin gh-pages

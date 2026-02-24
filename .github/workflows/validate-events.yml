@@ -1,0 +1,38 @@
+name: Validate Events
+
+on:
+  pull_request:
+    paths:
+      - 'data/upcoming/**.json'
+      - 'data/archive/**.json'
+      - 'data/index.json'
+      - 'scripts/validate-event.py'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Validate changed event files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --prune --depth=1 origin "${GITHUB_BASE_REF}"
+          CHANGED=$(git diff --name-only "origin/${GITHUB_BASE_REF}"..."${GITHUB_SHA}" -- 'data/upcoming/*.json' 'data/archive/*.json')
+          if [ -z "$CHANGED" ]; then
+            echo "No event files changed."
+            exit 0
+          fi
+          echo "Validating:"
+          echo "$CHANGED"
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            python3 scripts/validate-event.py "$file"
+          done <<< "$CHANGED"
