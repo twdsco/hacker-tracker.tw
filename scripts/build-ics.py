@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import sys
 
@@ -63,6 +63,7 @@ def build_calendar(items):
         if not title or not start or not end:
             continue
 
+        is_date_only = "T" not in start and "T" not in end
         try:
             dt_start = parse_datetime(start)
             dt_end = parse_datetime(end)
@@ -86,9 +87,13 @@ def build_calendar(items):
             f"UID:{uid}",
             f"DTSTAMP:{dtstamp}",
             f"SUMMARY:{title}",
-            f"DTSTART:{format_dt(dt_start)}",
-            f"DTEND:{format_dt(dt_end)}",
         ])
+        if is_date_only:
+            lines.append(f"DTSTART;VALUE=DATE:{dt_start.strftime('%Y%m%d')}")
+            lines.append(f"DTEND;VALUE=DATE:{(dt_end + timedelta(days=1)).strftime('%Y%m%d')}")
+        else:
+            lines.append(f"DTSTART:{format_dt(dt_start)}")
+            lines.append(f"DTEND:{format_dt(dt_end)}")
 
         if location:
             lines.append(f"LOCATION:{location}")

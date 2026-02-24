@@ -205,7 +205,8 @@
         }
 
         function buildDateTimeWithTimezone(dateStr, timeStr) {
-            if (!dateStr || !timeStr) return '';
+            if (!dateStr) return '';
+            if (!timeStr) return dateStr;
             const normalizedTime = timeStr.length === 5 ? `${timeStr}:00` : timeStr;
             return `${dateStr}T${normalizedTime}+08:00`;
         }
@@ -678,13 +679,20 @@
             const status = document.getElementById('add-status').value;
             const tags = getSelectedTags();
 
+            const hasStartTime = startTime !== "";
+            const hasEndTime = endTime !== "";
+            if (hasStartTime !== hasEndTime) {
+                alert("開始時間與結束時間需同時填寫或同時留空。");
+                return;
+            }
+
             if (!tags.includes('實體') && !tags.includes('線上')) {
                 alert("請至少選擇「實體」或「線上」其中一個標籤。");
                 return;
             }
 
             // 驗證時間
-            if (new Date(end) <= new Date(start)) {
+            if (new Date(end) < new Date(start)) {
                 alert("結束時間必須晚於開始時間！");
                 return;
             }
@@ -708,7 +716,7 @@
                 .replace(/^-+|-+$/g, '')
                 .slice(0, 40);
             const datePrefix = startDate.replace(/-/g, '');
-            const fileName = `${slug || 'event'}-${datePrefix}.json`;
+            const fileName = `${datePrefix}-${slug || 'event'}.json`;
             const jsonString = JSON.stringify(newEvent, null, 4);
 
             const output = document.getElementById('add-json-output');
@@ -766,4 +774,3 @@
         }
 
         init();
-

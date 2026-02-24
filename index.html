@@ -128,8 +128,8 @@
                         <input type="date" id="add-start-date" class="form-input" required>
                     </div>
                     <div class="form-group">
-                        <label>開始時間 (必填)</label>
-                        <input type="time" id="add-start-time" class="form-input" required>
+                        <label>開始時間</label>
+                        <input type="time" id="add-start-time" class="form-input">
                     </div>
                 </div>
                 <div class="form-row">
@@ -138,8 +138,8 @@
                         <input type="date" id="add-end-date" class="form-input" required>
                     </div>
                     <div class="form-group">
-                        <label>結束時間 (必填)</label>
-                        <input type="time" id="add-end-time" class="form-input" required>
+                        <label>結束時間</label>
+                        <input type="time" id="add-end-time" class="form-input">
                     </div>
                 </div>
                 <div class="form-row">
@@ -191,7 +191,7 @@
     <div id="json-output-modal" class="modal-overlay">
         <div class="modal-content" style="max-width: 520px;">
             <button class="modal-close" onclick="closeTargetModal('json-output-modal')">&times;</button>
-            <h2 style="margin: 0; font-size: 1.4rem; color: var(--accent);">📄 產生的 JSON</h2>
+            <h2 style="margin: 0; font-size: 1.4rem; color: var(--accent);">📄 JSON</h2>
             <div class="form-group" style="margin-top: 12px;">
                 <label id="json-output-filename">檔名：</label>
                 <textarea id="add-json-output" class="form-input" rows="10" readonly></textarea>
