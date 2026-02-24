@@ -1,0 +1,32 @@
+[
+    {
+        "title": "CYBERSEC 2026 台灣資安大會",
+        "start": "2026-05-05",
+        "end": "2026-05-07",
+        "location": "南港展覽館二館",
+        "organizer": "iThome",
+        "url": "https://cybersec.ithome.com.tw/2026/",
+        "contact": "cybersec@ithome.tw",
+        "status": "confirmed",
+        "tags": [
+            "實體",
+            "資安",
+            "Conf"
+        ]
+    },
+    {
+        "title": "HITCON 2026",
+        "start": "2026-08-21",
+        "end": "2026-08-22",
+        "location": "中央研究院 | 人文社會科學館",
+        "organizer": "台灣駭客協會",
+        "url": "https://hitcon.org/",
+        "contact": "service@hitcon.org",
+        "status": "confirmed",
+        "tags": [
+            "實體",
+            "資安",
+            "Conf"
+        ]
+    }
+]

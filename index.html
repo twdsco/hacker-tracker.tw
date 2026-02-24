@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hacker-tracker.tw</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+
+    <header>
+        <h1>hacker-tracker.tw</h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">台灣資訊相關活動行事曆</p>
+    </header>
+
+    <div class="controls">
+        <button class="tab-btn active" onclick="switchView('list')">📄 列表</button>
+        <button class="tab-btn" onclick="switchView('month')">📅 月曆</button>
+        <button class="tab-btn" onclick="switchView('year')">🗓️ 年曆</button>
+        <!-- 加入新增活動按鈕 -->
+        <button class="nav-btn" onclick="openAddEventModal()" style="margin-left: 20px; font-size: 1rem; border-color: var(--accent); color: var(--accent);">➕ 提交新活動</button>
+    </div>
+    <div class="filter-bar">
+        <div class="filter-title">篩選標籤</div>
+        <div id="tag-filter-options" class="tag-options"></div>
+    </div>
+
+    <!-- View: List -->
+    <div id="view-list" class="view-container active"></div>
+
+    <!-- View: Month -->
+    <div id="view-month" class="view-container">
+        <div class="view-header">
+            <button class="nav-btn" onclick="changeMonth(-1)">&#10094;</button>
+            <h2 id="month-view-title" class="title-btn" onclick="openMonthPicker()" title="點擊選擇年月"></h2>
+            <button class="nav-btn" onclick="changeMonth(1)">&#10095;</button>
+        </div>
+        <div class="calendar-grid" id="month-grid">
+            <!-- 由 JS 動態生成表頭、背景與活動跨欄 -->
+        </div>
+    </div>
+
+    <!-- View: Year -->
+    <div id="view-year" class="view-container">
+        <div class="view-header">
+            <button class="nav-btn" onclick="changeYear(-1)">&#10094;</button>
+            <h2 id="year-view-title" class="title-btn" onclick="openYearPicker()" title="點擊選擇年份"></h2>
+            <button class="nav-btn" onclick="changeYear(1)">&#10095;</button>
+        </div>
+        <div class="year-grid" id="year-grid"></div>
+    </div>
+
+    <!-- Modal: 單一活動詳細資訊 -->
+    <div id="event-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeTargetModal('event-modal')">&times;</button>
+            <div id="modal-badge" class="badge"></div>
+            <h2 id="modal-title" style="margin: 0; font-size: 1.6rem;"></h2>
+            <div id="modal-tags" class="event-tags" style="margin-top: 10px;"></div>
+            <div class="modal-body-info">
+                <span class="info-item" id="modal-datetime"></span>
+                <span class="info-item" id="modal-location"></span>
+                <span class="info-item" id="modal-organizer"></span>
+                <span class="info-item" id="modal-contact"></span>
+                <span class="info-item" id="modal-url-container"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: 多個活動列表 -->
+    <div id="multi-event-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px;">
+            <button class="modal-close" onclick="closeTargetModal('multi-event-modal')">&times;</button>
+            <h2 id="multi-modal-title" style="margin: 0; font-size: 1.4rem; color: var(--accent);"></h2>
+            <div id="multi-modal-list" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <!-- Modal: 月份選擇器 -->
+    <div id="month-picker-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 320px;">
+            <button class="modal-close" onclick="closeTargetModal('month-picker-modal')">&times;</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <button class="nav-btn" onclick="changePickerYear(-1)">&#10094;</button>
+                <h3 id="picker-month-year-title" style="margin: 0; color: var(--accent);"></h3>
+                <button class="nav-btn" onclick="changePickerYear(1)">&#10095;</button>
+            </div>
+            <div id="picker-months-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;"></div>
+        </div>
+    </div>
+
+    <!-- Modal: 年份選擇器 -->
+    <div id="year-picker-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 320px;">
+            <button class="modal-close" onclick="closeTargetModal('year-picker-modal')">&times;</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <button class="nav-btn" onclick="changePickerDecade(-1)">&#10094;</button>
+                <h3 id="picker-year-range-title" style="margin: 0; color: var(--accent);"></h3>
+                <button class="nav-btn" onclick="changePickerDecade(1)">&#10095;</button>
+            </div>
+            <div id="picker-years-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;"></div>
+        </div>
+    </div>
+
+    <!-- Modal: 新增活動表單 -->
+    <div id="add-event-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
+            <button class="modal-close" onclick="closeTargetModal('add-event-modal')">&times;</button>
+            <h2 style="margin: 0; font-size: 1.5rem; color: var(--accent);">➕ 提交新活動 (PR)</h2>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">
+                1. 填寫完成後，系統會產生 JSON 資料。<br>
+                2. 按下「複製 JSON」即可複製內容。<br>
+                3. 請到 <a href="https://github.com/twdsco/hacker-tracker.tw">GitHub</a> Fork 本專案，將資料新增到 `data/pending/` (檔名: `{英文活動簡稱}-{活動日期YYYYMMDD}.json`) 後送出 Pull Request。<br>
+            </p>
+            <form id="add-event-form" onsubmit="submitNewEvent(event)">
+                <div class="form-group">
+                    <label>活動名稱 (必填)</label>
+                    <input type="text" id="add-title" class="form-input" required placeholder="例如：某某資安社群小聚">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>開始日期 (必填)</label>
+                        <input type="date" id="add-start-date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>開始時間 (必填)</label>
+                        <input type="time" id="add-start-time" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>結束日期 (必填)</label>
+                        <input type="date" id="add-end-date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>結束時間 (必填)</label>
+                        <input type="time" id="add-end-time" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>活動狀態</label>
+                        <select id="add-status" class="form-input">
+                            <option value="confirmed">✅ 已確定</option>
+                            <option value="tentative">⚠️ 暫定</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            地點
+                            <span class="inline-option">
+                                <input type="checkbox" id="add-online">
+                                <span>線上活動</span>
+                            </span>
+                        </label>
+                        <input type="text" id="add-location" class="form-input" placeholder="實體地點">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>主辦單位 (必填)</label>
+                        <input type="text" id="add-organizer" class="form-input" placeholder="例如：HITCON" required>
+                    </div>
+                    <div class="form-group">
+                        <label>聯絡資訊</label>
+                        <input type="text" id="add-contact" class="form-input" placeholder="Email、聯絡人等資訊">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>活動網址</label>
+                    <input type="url" id="add-url" class="form-input" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>標籤 (Tags)</label>
+                    <div id="add-tags-options" class="tag-options"></div>
+                    <div id="add-tags-hint" class="form-hint"></div>
+                </div>
+                <button type="submit" class="picker-btn active" style="width: 100%; margin-top: 10px; font-size: 1.1rem; padding: 15px 0;">
+                    產生 JSON
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: JSON 輸出 -->
+    <div id="json-output-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 520px;">
+            <button class="modal-close" onclick="closeTargetModal('json-output-modal')">&times;</button>
+            <h2 style="margin: 0; font-size: 1.4rem; color: var(--accent);">📄 產生的 JSON</h2>
+            <div class="form-group" style="margin-top: 12px;">
+                <label id="json-output-filename">檔名：</label>
+                <textarea id="add-json-output" class="form-input" rows="10" readonly></textarea>
+                <button id="copy-json-btn" type="button" class="picker-btn" style="width: 100%; margin-top: 10px; padding: 12px 0;">複製 JSON</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 頁尾 (Footer) -->
+    <footer>
+        <p>
+            台灣資訊相關活動行事曆
+        </p>
+        <p>
+            <a id="footer-repo-link" class="github-link" href="#" target="_blank" aria-label="GitHub Repository">
+                <svg viewBox="0 0 16 16" aria-hidden="true" class="github-icon">
+                    <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"></path>
+                </svg>
+            </a>
+        </p>
+    </footer>
+
+    <script src="static/config.js"></script>
+    <script src="static/app.js"></script>
+</body>
+</html>
