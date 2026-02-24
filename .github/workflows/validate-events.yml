@@ -28,7 +28,7 @@ jobs:
           set -euo pipefail
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          CHANGED=$(git diff --name-only "${BASE_SHA}" "${HEAD_SHA}" -- 'data/upcoming/*.json' 'data/archive/*.json')
+          CHANGED=$(git diff --name-status "${BASE_SHA}" "${HEAD_SHA}" -- 'data/upcoming/*.json' 'data/archive/*.json' | awk '$1!="D"{print $2}')
           if [ -z "$CHANGED" ]; then
             echo "No event files changed."
             exit 0
