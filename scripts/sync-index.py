@@ -9,7 +9,16 @@ index_file = root / "data" / "index.json"
 
 created_env = os.environ.get("CREATED", "")
 created = [line.strip() for line in created_env.splitlines() if line.strip()]
-created_rel = {str(Path(p).relative_to(root / "data")) for p in created}
+def to_data_relative(path_str: str) -> str:
+    path = Path(path_str)
+    if path.is_absolute():
+        return str(path.relative_to(root / "data"))
+    parts = path.parts
+    if parts and parts[0] == "data":
+        return str(Path(*parts[1:]))
+    return str(path)
+
+created_rel = {to_data_relative(p) for p in created}
 
 current = []
 if index_file.exists():
