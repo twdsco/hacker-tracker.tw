@@ -3,7 +3,6 @@ const CONFIG = {
         repoUrl: "https://github.com/twdsco/hacker-tracker.tw",
     },
     data: {
-        indexPath: "data/index.json",
         allPath: "data/all.json",
         cacheBusting: true
     },
