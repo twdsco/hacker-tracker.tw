@@ -69,6 +69,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git add -N data/all.json data/allevents.ics data/confirmed.ics data/tentative.ics
           git status --porcelain
           if git diff --quiet; then
             echo "No changes to commit."
