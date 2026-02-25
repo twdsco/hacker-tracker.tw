@@ -5,9 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'data/upcoming/**.json'
-      - 'data/archive/**.json'
-      - 'data/index.json'
+      - 'data/original/*.json'
       - 'data/all.json'
       - 'scripts/build-all.py'
       - 'scripts/validate-event.py'
@@ -36,7 +34,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          CHANGED=$(git diff --name-only "${GITHUB_SHA}^" "${GITHUB_SHA}" -- 'data/upcoming/*.json' 'data/archive/*.json')
+          CHANGED=$(git diff --name-only "${GITHUB_SHA}^" "${GITHUB_SHA}" -- 'data/original/*.json')
           if [ -z "$CHANGED" ]; then
             echo "No event files changed."
           else
@@ -47,13 +45,6 @@ jobs:
               python3 scripts/validate-event.py "$file"
             done <<< "$CHANGED"
           fi
-
-      - name: Sync index.json
-        shell: bash
-        run: |
-          set -euo pipefail
-          CREATED=$(git diff --name-status "${GITHUB_SHA}^" "${GITHUB_SHA}" -- 'data/upcoming/*.json' 'data/archive/*.json' | awk '$1=="A"{print $2}')
-          CREATED="$CREATED" python3 scripts/sync-index.py
 
       - name: Build all.json
         run: |
@@ -72,8 +63,8 @@ jobs:
             echo "No changes to commit."
             exit 0
           fi
-          git add data/index.json data/all.json data/allevents.ics data/confirmed.ics data/tentative.ics
-          git commit -m "Sync index.json, all.json, and ics feeds"
+          git add data/all.json data/allevents.ics data/confirmed.ics data/tentative.ics
+          git commit -m "Sync all.json and ics feeds"
           git push origin main
 
       - name: Merge main into gh-pages

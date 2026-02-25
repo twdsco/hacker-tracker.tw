@@ -114,8 +114,9 @@
             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 15px;">
                 1. 填寫完成後，系統會產生 JSON 資料。<br>
                 2. 按下「複製 JSON」即可複製內容。<br>
-                3. 請到 <a href="https://github.com/twdsco/hacker-tracker.tw">GitHub</a> Fork 本專案，新增檔案至 `data/upcoming/` 或 `data/archive/` (檔名: `{活動日期YYYYMMDD}-{英文活動簡稱}.json`)。<br>
-                4. 提交 Pull Request。<br>
+                3. 請到 <a href="https://github.com/twdsco/hacker-tracker.tw">GitHub</a> Fork 本專案，新增檔案至 `data/original/`（檔名: `{ORG}.json`）。<br>
+                4. 執行 `scripts/build-all.py` 產生 `data/all.json`。<br>
+                5. 提交 Pull Request。<br>
             </p>
             <form id="add-event-form" onsubmit="submitNewEvent(event)">
                 <div class="form-group">

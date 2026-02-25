@@ -715,8 +715,7 @@
                 .replace(/[^a-z0-9\u4e00-\u9fff]+/g, '-')
                 .replace(/^-+|-+$/g, '')
                 .slice(0, 40);
-            const datePrefix = startDate.replace(/-/g, '');
-            const fileName = `${datePrefix}-${slug || 'event'}.json`;
+            const fileName = `${slug || 'event'}.json`;
             const jsonString = JSON.stringify(newEvent, null, 4);
 
             const output = document.getElementById('add-json-output');
