@@ -63,8 +63,9 @@
 
         /* 網址超連結樣式 */
         .event-info a, .modal-body-info a {
-            color: var(--accent); text-decoration: none;
-            border-bottom: 1px dashed var(--accent);
+            color: var(--accent);
+            text-decoration: underline dotted;
+            text-underline-offset: 5px;
             transition: 0.2s; word-break: break-all;
         }
         .event-info a:hover, .modal-body-info a:hover { color: #fff; border-bottom: 1px solid #fff; }
@@ -289,3 +290,6 @@
         }
         .github-link { display: inline-flex; align-items: center; }
         .github-icon { width: 28px; height: 28px; fill: #fff; }
+        @media (max-width: 600px) {
+            .form-row.form-row-stack-mobile { flex-direction: column; }
+        }

@@ -274,7 +274,7 @@
                     if (hasValue(ev.contact)) infoItems.push(`<span class="info-item">👤 ${escapeHTML(ev.contact)}</span>`);
                     const safeUrl = normalizeUrl(ev.url);
                     if (safeUrl) {
-                        infoItems.push(`<span class="info-item">🔗 網址：<a href="${escapeHTML(safeUrl)}" target="_blank" rel="noopener noreferrer">${escapeHTML(safeUrl)}</a></span>`);
+                        infoItems.push(`<span class="info-item">🔗<a href="${escapeHTML(safeUrl)}" target="_blank" rel="noopener noreferrer">${escapeHTML(safeUrl)}</a></span>`);
                     }
                     
                     cardsHTML += `
