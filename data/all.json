@@ -45,6 +45,51 @@
         ]
     },
     {
+        "title": "HITCON CISO SUMMIT 2026",
+        "start": "2026-10-21",
+        "end": "2026-10-21",
+        "location": "TBD",
+        "organizer": "台灣駭客協會",
+        "url": "https://hitcon.org/",
+        "contact": "service@hitcon.org",
+        "status": "tentative",
+        "tags": [
+            "實體",
+            "資安",
+            "Conf"
+        ]
+    },
+    {
+        "title": "HITCON CTF Quals 2026",
+        "start": "2026-08-28T22:00+08:00",
+        "end": "2026-08-30T22:00+08:00",
+        "location": "Online",
+        "organizer": "台灣駭客協會",
+        "url": "https://ctf.hitcon.org/",
+        "contact": "ctf@hitcon.org",
+        "status": "tentative",
+        "tags": [
+            "線上",
+            "資安",
+            "CTF"
+        ]
+    },
+    {
+        "title": "HITCON CTF Final 2026",
+        "start": "2026-11-07",
+        "end": "2026-11-08",
+        "location": "TBD",
+        "organizer": "台灣駭客協會",
+        "url": "https://ctf.hitcon.org/",
+        "contact": "ctf@hitcon.org",
+        "status": "tentative",
+        "tags": [
+            "實體",
+            "資安",
+            "CTF"
+        ]
+    },
+    {
         "title": "CYBERSEC 2026 台灣資安大會",
         "start": "2026-05-05",
         "end": "2026-05-07",
