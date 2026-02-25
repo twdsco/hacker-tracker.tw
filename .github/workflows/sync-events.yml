@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'data/original/*.json'
-      - 'scripts/build-all.py'
-      - 'scripts/validate-event.py'
   workflow_dispatch:
 
 jobs:

@@ -2,9 +2,7 @@ name: Validate Events
 
 on:
   pull_request:
-    paths:
-      - 'data/original/*.json'
-      - 'scripts/validate-event.py'
+  workflow_dispatch:
 
 jobs:
   validate:
