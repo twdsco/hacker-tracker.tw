@@ -6,12 +6,5 @@ const CONFIG = {
         allPath: "data/all.json",
         cacheBusting: true
     },
-    supportedTags: [
-        "實體",
-        "線上",
-        "資安",
-        "資訊",
-        "Conf",
-        "CTF"
-    ]
+    tagsPath: "data/tags.json"
 };

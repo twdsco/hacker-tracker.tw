@@ -1,6 +1,7 @@
         // --- 1. 活動資料 (從 JSON 載入) ---
         // 資料結構：使用 start 與 end 取代 date, endDate, time
         let events = [];
+        let supportedTags = [];
         let activeTagFilters = [];
 
         let displayYearForMonth = 2026;
@@ -11,8 +12,13 @@
             const empty = [];
             try {
                 const cacheBuster = CONFIG.data.cacheBusting ? `?ts=${Date.now()}` : '';
-                const allRes = await fetch(`${CONFIG.data.allPath}${cacheBuster}`);
+                const [allRes, tagsRes] = await Promise.all([
+                    fetch(`${CONFIG.data.allPath}${cacheBuster}`),
+                    fetch(`${CONFIG.tagsPath}${cacheBuster}`)
+                ]);
                 const allData = allRes.ok ? await allRes.json() : empty;
+                const tagsData = tagsRes.ok ? await tagsRes.json() : empty;
+                supportedTags = Array.isArray(tagsData) ? tagsData : [];
                 const combined = Array.isArray(allData) ? allData : empty;
 
                 events = combined.map((ev, index) => ({
@@ -29,6 +35,7 @@
             } catch (err) {
                 console.error('Failed to load events:', err);
                 events = [];
+                supportedTags = [];
             }
         }
 
@@ -146,7 +153,7 @@
 
         function parseTagsInput(value) {
             if (!value) return [];
-            const supported = new Set(CONFIG.supportedTags.map(normalizeTag));
+            const supported = new Set(supportedTags.map(normalizeTag));
             const rawTags = value.split(',').map(normalizeTag).filter(Boolean);
             const deduped = Array.from(new Set(rawTags));
             return deduped.filter(tag => supported.has(tag));
@@ -154,7 +161,7 @@
 
         function filterSupportedTags(tags) {
             if (!Array.isArray(tags)) return [];
-            const supported = new Set(CONFIG.supportedTags.map(normalizeTag));
+            const supported = new Set(supportedTags.map(normalizeTag));
             const normalized = tags.map(normalizeTag).filter(Boolean);
             const deduped = Array.from(new Set(normalized));
             return deduped.filter(tag => supported.has(tag));
@@ -194,7 +201,7 @@
         function renderTagFilterOptions() {
             const container = document.getElementById('tag-filter-options');
             if (!container) return;
-            container.innerHTML = CONFIG.supportedTags.map(tag => `
+            container.innerHTML = supportedTags.map(tag => `
                 <button type="button" class="tag-option" data-tag="${tag}" aria-pressed="false">${tag}</button>
             `).join('');
             const selected = new Set(activeTagFilters);
@@ -219,7 +226,7 @@
         function renderTagOptions() {
             const container = document.getElementById('add-tags-options');
             if (!container) return;
-            container.innerHTML = CONFIG.supportedTags.map(tag => `
+            container.innerHTML = supportedTags.map(tag => `
                 <button type="button" class="tag-option" data-tag="${tag}" aria-pressed="false">${tag}</button>
             `).join('');
             container.querySelectorAll('.tag-option').forEach(btn => {

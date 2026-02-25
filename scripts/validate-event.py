@@ -5,6 +5,21 @@ from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
+ROOT_DIR = Path(__file__).resolve().parent.parent
+TAGS_FILE = ROOT_DIR / "data" / "tags.json"
+if not TAGS_FILE.exists():
+    print(f"Error: Missing tags.json at {TAGS_FILE}", file=sys.stderr)
+    sys.exit(1)
+try:
+    _tags_data = json.loads(TAGS_FILE.read_text(encoding="utf-8"))
+except json.JSONDecodeError as exc:
+    print(f"Error: Invalid tags.json: {exc}", file=sys.stderr)
+    sys.exit(1)
+if not isinstance(_tags_data, list):
+    print("Error: tags.json must be a JSON array", file=sys.stderr)
+    sys.exit(1)
+SUPPORTED_TAGS = {tag for tag in _tags_data if isinstance(tag, str)}
+
 REQUIRED_TAGS = {"實體", "線上"}
 ALLOWED_STATUS = {"confirmed", "tentative"}
 REQUIRED_FIELDS = {
@@ -61,6 +76,11 @@ def is_status(value: object) -> tuple[bool, str]:
 def is_tags(value: object) -> tuple[bool, str]:
     if not isinstance(value, list):
         return False, "must be an array"
+    for tag in value:
+        if not isinstance(tag, str):
+            return False, "each tag must be a string"
+        if tag not in SUPPORTED_TAGS:
+            return False, f"unsupported tag: {tag}"
     if not any(tag in REQUIRED_TAGS for tag in value if isinstance(tag, str)):
         return False, "must include at least one of: 實體, 線上"
     return True, ""
