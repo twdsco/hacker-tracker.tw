@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - 'data/original/*.json'
-      - 'data/all.json'
       - 'scripts/build-all.py'
       - 'scripts/validate-event.py'
   workflow_dispatch:
@@ -30,11 +29,23 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Validate changed event files
+      - name: Merge main into gh-pages
         shell: bash
         run: |
           set -euo pipefail
-          CHANGED=$(git diff --name-only "${GITHUB_SHA}^" "${GITHUB_SHA}" -- 'data/original/*.json')
+          git fetch origin gh-pages || true
+          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
+            git checkout -B gh-pages origin/gh-pages
+          else
+            git checkout -B gh-pages
+          fi
+          git merge --no-edit origin/main
+
+      - name: Validate changed event files (gh-pages)
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHANGED=$(git diff --name-only "HEAD^" "HEAD" -- 'data/original/*.json')
           if [ -z "$CHANGED" ]; then
             echo "No event files changed."
           else
@@ -54,7 +65,7 @@ jobs:
         run: |
           python3 scripts/build-ics.py
 
-      - name: Commit changes
+      - name: Commit and push gh-pages
         shell: bash
         run: |
           set -euo pipefail
@@ -64,18 +75,5 @@ jobs:
             exit 0
           fi
           git add data/all.json data/allevents.ics data/confirmed.ics data/tentative.ics
-          git commit -m "Sync all.json and ics feeds"
-          git push origin main
-
-      - name: Merge main into gh-pages
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin gh-pages || true
-          if git show-ref --verify --quiet refs/remotes/origin/gh-pages; then
-            git checkout -B gh-pages origin/gh-pages
-          else
-            git checkout -B gh-pages
-          fi
-          git merge --no-edit origin/main
+          git commit -m "Update all.json and ics feeds"
           git push origin gh-pages
