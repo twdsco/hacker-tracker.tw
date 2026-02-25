@@ -18,8 +18,7 @@
                 events = combined.map((ev, index) => ({
                     id: index + 1,
                     title: ev.title,
-                    start: ev.start,
-                    end: ev.end,
+                    period: createEventPeriod(ev.start, ev.end),
                     location: ev.location,
                     organizer: ev.organizer,
                     url: ev.url,
@@ -34,10 +33,43 @@
         }
 
         // --- 輔助函式 ---
+        function toEventDateTime(value) {
+            if (!value || typeof value !== 'string') {
+                return { date: null, hasTime: false, raw: '' };
+            }
+            const hasTime = value.includes('T');
+            const ms = Date.parse(value);
+            if (Number.isNaN(ms)) {
+                return { date: null, hasTime: hasTime, raw: value };
+            }
+            return { date: new Date(ms), hasTime: hasTime, raw: value };
+        }
+
+        function createEventPeriod(startStr, endStr) {
+            return {
+                start: toEventDateTime(startStr),
+                end: toEventDateTime(endStr)
+            };
+        }
+
+        function isDateInPeriod(dateObj, period) {
+            if (!period || !period.start.date || !period.end.date || !dateObj) return false;
+            if (!period.start.hasTime && !period.end.hasTime) {
+                // 如果都沒有時間，則比較日期部分
+                const start = new Date(period.start.date);
+                start.setHours(0, 0, 0, 0);
+                const end = new Date(period.end.date);
+                end.setHours(23, 59, 59, 999);
+                return dateObj >= start && dateObj <= end;
+            }
+            return dateObj >= period.start.date && dateObj <= period.end.date;
+        }
+
         function isDateInEvent(targetDateStr, ev) {
-            const startDateStr = ev.start.split('T')[0];
-            const endDateStr = ev.end.split('T')[0];
-            return targetDateStr >= startDateStr && targetDateStr <= endDateStr;
+            if (!ev.period) return false;
+            const targetMs = Date.parse(`${targetDateStr}T00:00:00+08:00`);
+            if (Number.isNaN(targetMs)) return false;
+            return isDateInPeriod(new Date(targetMs), ev.period);
         }
         
         function formatDateStr(dateObj) {
@@ -48,17 +80,38 @@
         }
 
         // 格式化顯示「開始 ~ 結束」的時間字串
-        function formatDateTimeDisplay(startStr, endStr) {
-            const startDate = startStr.split('T')[0];
-            const startTime = startStr.split('T')[1] || '';
-            const endDate = endStr.split('T')[0];
-            const endTime = endStr.split('T')[1] || '';
+        function formatDateTimeDisplay(period) {
+            if (!period || !period.start.date || !period.end.date) return '';
+            const startDateObj = period.start.date;
+            const endDateObj = period.end.date;
+
+            const dateFmt = new Intl.DateTimeFormat('zh-TW', {
+                timeZone: 'Asia/Taipei',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            const timeFmt = new Intl.DateTimeFormat('zh-TW', {
+                timeZone: 'Asia/Taipei',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+
+            const startDate = dateFmt.format(startDateObj).replace(/\//g, '-');
+            const endDate = dateFmt.format(endDateObj).replace(/\//g, '-');
+            const startHasTime = period.start.hasTime;
+            const endHasTime = period.end.hasTime;
+            const startTime = startHasTime ? timeFmt.format(startDateObj) : '';
+            const endTime = endHasTime ? timeFmt.format(endDateObj) : '';
 
             if (startDate === endDate) {
-                return `${startDate} ${startTime} ~ ${endTime}`;
-            } else {
-                return `${startDate} ${startTime} ~ ${endDate} ${endTime}`;
+                if (startHasTime || endHasTime) {
+                    return `${startDate} ${startTime} ~ ${endTime}`.trim();
+                }
+                return `${startDate}`;
             }
+            return `${startDate} ${startTime} ~ ${endDate} ${endTime}`.trim();
         }
 
         function hasValue(value) {
@@ -225,8 +278,8 @@
                 return;
             }
 
-            const earliest = [...events].sort((a, b) => new Date(a.start) - new Date(b.start))[0];
-            const earliestDate = new Date(earliest.start);
+            const earliest = [...events].sort((a, b) => a.period.start.date - b.period.start.date)[0];
+            const earliestDate = earliest.period.start.date;
             displayYearForMonth = earliestDate.getFullYear();
             displayMonth = earliestDate.getMonth() + 1;
             displayYearForYear = earliestDate.getFullYear();
@@ -248,11 +301,11 @@
             const container = document.getElementById('view-list');
             container.innerHTML = '';
             const visibleEvents = getVisibleEvents();
-            const sortedEvents = [...visibleEvents].sort((a, b) => new Date(a.start) - new Date(b.start));
+            const sortedEvents = [...visibleEvents].sort((a, b) => a.period.start.date - b.period.start.date);
 
             const groupedEvents = {};
             sortedEvents.forEach(ev => {
-                const dateObj = new Date(ev.start);
+                const dateObj = ev.period.start.date;
                 const year = dateObj.getFullYear();
                 const month = dateObj.getMonth() + 1;
                 const monthKey = `${year}年 ${month}月`;
@@ -265,7 +318,7 @@
                 
                 monthEvents.forEach(ev => {
                     const badgeHTML = ev.status === 'tentative' ? `<div class="badge absolute-top tentative">⚠️ 暫定</div>` : '';
-                    const dateDisplay = formatDateTimeDisplay(ev.start, ev.end);
+                    const dateDisplay = formatDateTimeDisplay(ev.period);
                     const tagsHTML = renderTagPills(ev.tags);
                     const infoItems = [];
                     infoItems.push(`<span class="info-item">🕒 ${escapeHTML(dateDisplay)}</span>`);
@@ -354,24 +407,22 @@
 
                 // 篩選出有與本週重疊的活動
                 const weekEvents = getVisibleEvents().filter(ev => {
-                    const evStartStr = ev.start.split('T')[0];
-                    const evEndStr = ev.end.split('T')[0];
-                    return evStartStr <= weekEndStr && evEndStr >= weekStartStr;
+                    return ev.period.start.date <= week[6] && ev.period.end.date >= week[0];
                 });
 
                 // 排序：長天數優先，再來是日期早的優先
                 weekEvents.sort((a, b) => {
-                    const aDur = new Date(a.end) - new Date(a.start);
-                    const bDur = new Date(b.end) - new Date(b.start);
+                    const aDur = a.period.end.date - a.period.start.date;
+                    const bDur = b.period.end.date - b.period.start.date;
                     if (bDur !== aDur) return bDur - aDur;
-                    return new Date(a.start) - new Date(b.start);
+                    return a.period.start.date - b.period.start.date;
                 });
 
                 const slotOccupied = [0,0,0,0,0,0,0]; // 記錄本週每一天的垂直空間被佔用了多少
 
                 weekEvents.forEach(ev => {
-                    const evStartStr = ev.start.split('T')[0];
-                    const evEndStr = ev.end.split('T')[0];
+                    const evStartStr = formatDateStr(ev.period.start.date);
+                    const evEndStr = formatDateStr(ev.period.end.date);
 
                     // 計算在「本週」內的起始與結束欄位 (0~6)
                     let startCol = 0, endCol = 6;
@@ -451,9 +502,9 @@
                 const monthNumStr = (monthIndex + 1).toString().padStart(2, '0');
                 
                 const hasEventInMonth = visibleEvents.some(ev => {
-                    const monthStart = `${year}-${monthNumStr}-01`;
-                    const monthEnd = `${year}-${monthNumStr}-${daysInMonth}`;
-                    return ev.start.split('T')[0] <= monthEnd && ev.end.split('T')[0] >= monthStart; 
+                    const monthStart = new Date(year, monthIndex, 1);
+                    const monthEnd = new Date(year, monthIndex, daysInMonth, 23, 59, 59, 999);
+                    return ev.period.start.date <= monthEnd && ev.period.end.date >= monthStart; 
                 });
                 const highlightStyle = hasEventInMonth ? `border-color: var(--accent); box-shadow: 0 0 10px rgba(0,255,204,0.1);` : ``;
 
@@ -588,7 +639,7 @@
 
             document.getElementById('modal-title').innerText = ev.title;
             document.getElementById('modal-tags').innerHTML = renderTagPills(ev.tags);
-            const dateDisplay = formatDateTimeDisplay(ev.start, ev.end);
+            const dateDisplay = formatDateTimeDisplay(ev.period);
             const modalDate = document.getElementById('modal-datetime');
             const modalLocation = document.getElementById('modal-location');
             const modalOrganizer = document.getElementById('modal-organizer');
