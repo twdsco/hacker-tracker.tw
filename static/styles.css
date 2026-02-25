@@ -46,10 +46,10 @@
         .event-card {
             background-color: var(--bg-panel); border: 1px solid #333;
             border-radius: 8px; padding: 20px; margin-bottom: 15px;
-            position: relative; display: flex; flex-direction: column; gap: 8px;
+            position: relative; display: flex; flex-direction: column; gap: 12px;
         }
-        .event-title { font-size: 1.4rem; font-weight: bold; margin-bottom: 5px; }
-        .event-info { display: flex; gap: 20px; color: var(--text-secondary); font-size: 0.95rem; flex-wrap: wrap; }
+        .event-title { font-size: 1.4rem; font-weight: bold; margin: 0; }
+        .event-info { display: flex; gap: 10px; color: var(--text-secondary); font-size: 0.95rem; flex-wrap: wrap; }
         .info-item { display: flex; align-items: center; gap: 5px; }
         
         /* Badges */
@@ -292,4 +292,13 @@
         .github-icon { width: 28px; height: 28px; fill: #fff; }
         @media (max-width: 600px) {
             .form-row.form-row-stack-mobile { flex-direction: column; }
+            /* Only adjust padding when badge is present */
+            .event-card:has(.badge) .event-title,
+            .event-card:has(.badge) .event-tags,
+            .event-card:has(.badge) .event-info { padding-right: 90px; }
+            /* Better button layout on mobile */
+            .controls { flex-wrap: wrap; padding: 15px 10px; }
+            .controls .nav-btn { margin-left: 0 !important; flex: 1 1 100%; }
+            /* Adjust sticky month header position for taller controls on mobile */
+            .list-month-header { top: 115px; }
         }
